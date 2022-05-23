@@ -1,6 +1,4 @@
 import socket            
-def AES_Encrypt(msg,key):
-    print(msg)
 
 
 if __name__ == '__main__':
