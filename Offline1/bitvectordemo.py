@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1NoLVEBqkvrHwoYoEuxX0BeJvaJ5MtVrA
 """
 
-!pip install BitVector
+#pip install BitVectorpip install BitVector
 
 
 """Tables"""
@@ -67,8 +67,11 @@ InvMixer = [
 
 b = BitVector(hexstring="4E")
 int_val = b.intValue()
+print(hex(int_val))
 s = Sbox[int_val]
+print(hex(s))
 s = BitVector(intVal=s, size=8)
+print(s)
 print(s.get_bitvector_in_hex())
 
 AES_modulus = BitVector(bitstring='100011011')
