@@ -3,6 +3,15 @@ import numpy as np
 def ShiftRows(x):
     x[1:] = [np.append(x[i][i:], x[i][:i]) for i in range(1, 4)]
     return x
+def InvShiftRows(x):
+    y=[[0 for _ in range(4)] for _ in range(4)]
+    for i in range(0,4):
+        for j in range(0,4):
+                y[i][j]=x[i][(j-i+4)%4]
+    return y
+            
+
+
 Sbox = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -59,6 +68,12 @@ InvMixer = [
     [BitVector(hexstring="0D"), BitVector(hexstring="09"), BitVector(hexstring="0E"), BitVector(hexstring="0B")],
     [BitVector(hexstring="0B"), BitVector(hexstring="0D"), BitVector(hexstring="09"), BitVector(hexstring="0E")]
 ]
+def GF(a,b):
+    b = BitVector(intVal=b, size=8)
+    a = BitVector(intVal=a, size=8)
+    AES_modulus = BitVector(bitstring='100011011')
+    c = b.gf_multiply_modular(a, AES_modulus, 8)
+    return c.intValue()
 def gen_func(lst,n,round_const):
     last=list()
     last=lst[len(lst)-1].copy()
@@ -150,21 +165,21 @@ class AES:
         keys=key_expansion(mat)
         self.keys=keys
     def encrypt(self,msg):
-        cypher=[]
-        l=int(len(msg)/self.size)
-        if len(msg)%self.size!=0 :
+        cypher=list()
+        l=int(len(msg)/16)
+        if len(msg)%16!=0 :
             l=l+1
         start=0
         for i in range(0,l):
-            str=msg[start:start+self.size]
-            start=start+self.size
+            str=msg[start:start+16]
+            start=start+16
             lst=list()
             for m in str:
                 lst.append(hex(ord(m)))
             lst2= [int(x, 16) for x in lst]
             
-            if len(lst)<self.size:
-                for m in range(len(lst),self.size):
+            if len(lst)<16:
+                for m in range(len(lst),16):
                     lst2.append(ord(self.padding))
             mat = []
             #print(lst2)
@@ -175,8 +190,8 @@ class AES:
             for j in range(0,4):
                 for k in range(0,4):
                     mat[j][k]=mat[j][k]^self.keys[j][k]
-            # rounds 1-19/11/13
-            for m in range(1,self.round):
+            # rounds 1-10/12/14
+            for m in range(1,self.round+1):
                 #substitude byte
                 for j in range(0,4):
                     for k in range(0,4):
@@ -187,26 +202,77 @@ class AES:
                 #shift rows
                 mat=np.transpose(mat)
                 mat=ShiftRows(mat)
+                if m!=self.round:
                 #mix column
-                new_mat=[[0 for _ in range(4)] for _ in range(4)]
-                for j in range(0,4):
-                    new_mat[0][j]=(2|mat[0][j])^(3|mat[1][j])^mat[2][j]^mat[3][j]
-                    new_mat[1][j]=(2|mat[1][j])^(3|mat[2][j])^mat[0][j]^mat[3][j]
-                    new_mat[2][j]=(2|mat[2][j])^(3|mat[3][j])^mat[0][j]^mat[1][j]
-                    new_mat[3][j]=(2|mat[3][j])^(3|mat[0][j])^mat[2][j]^mat[1][j]
-                        
-                new_mat=np.transpose(new_mat)
+                    new_mat=[[0 for _ in range(4)] for _ in range(4)]
+                    for j in range(0,4):
+                        new_mat[0][j]=GF(2,mat[0][j])^GF(3,mat[1][j])^mat[2][j]^mat[3][j]
+                        new_mat[1][j]=GF(2,mat[1][j])^GF(3,mat[2][j])^mat[0][j]^mat[3][j]
+                        new_mat[2][j]=GF(2,mat[2][j])^GF(3,mat[3][j])^mat[0][j]^mat[1][j]
+                        new_mat[3][j]=GF(2,mat[3][j])^GF(3,mat[0][j])^mat[2][j]^mat[1][j]
+                    mat=new_mat.copy()  
+                mat=np.transpose(mat)
+                #add round key
+                #print("Round ",m)
+                for j in range(4*m,4+4*m):
+                    for k in range(0,4):
+                        mat[j-4*m][k]=mat[j-4*m][k]^self.keys[j][k]
+                        #print(hex(mat[j-4*m][k]))
+                
+            for j in range(0,4):
+                    for k in range(0,4):
+                       cypher.append(mat[j][k]) 
+        return cypher
 
+    def decrypt(self,lst):
+        l=int(len(lst)/16) 
+        msg=list()
+        for i in range(0,l):
+            lst2=list()
+            for j in range(16*i,16+16*i):
+                lst2.append(lst[j])
+            mat=[]
+            while lst2 != []:
+                mat.append(lst2[:4])
+                lst2 = lst2[4:]
+            #add round key -Round 0
+            for j in range(0,4):
+                for k in range(0,4):
+                    mat[j][k]=mat[j][k]^self.keys[j][k]
+            for m in range(1,self.round+1):
+                #inverse shift row
+                mat=np.transpose(mat)
+                mat=InvShiftRows(mat)
+                #inverse substitute byte
                 for j in range(0,4):
                     for k in range(0,4):
-                       print(hex(new_mat[j][k])) 
-                return
-
-            
-
-
-
-        
+                        val2=mat[j][k]%16
+                        val1=int(mat[j][k]/16)%16
+                        mat[j][k]=InvSbox[16*val1+val2]
+                mat=np.transpose(mat)
+                #add round key 
+                for j in range(4*m,4+4*m):
+                    for k in range(0,4):
+                        mat[j-4*m][k]=mat[j-4*m][k]^self.keys[j][k]
+                #inverse mix columns
+                if m!=self.round:
+                    mat=np.transpose(mat)
+                    new_mat=[[0 for _ in range(4)] for _ in range(4)]
+                    for j in range(0,4):
+                        new_mat[0][j]=GF(14,mat[0][j])^GF(11,mat[1][j])^GF(13,mat[2][j])^GF(9,mat[3][j])
+                        new_mat[1][j]=GF(9,mat[0][j])^GF(14,mat[1][j])^GF(11,mat[2][j])^GF(13,mat[3][j])
+                        new_mat[2][j]=GF(13,mat[0][j])^GF(9,mat[1][j])^GF(14,mat[2][j])^GF(11,mat[3][j])
+                        new_mat[3][j]=GF(11,mat[0][j])^GF(13,mat[1][j])^GF(9,mat[2][j])^GF(14,mat[3][j])
+                    mat=new_mat.copy()  
+                    mat=np.transpose(mat)
+            for j in range(0,4):
+                    for k in range(0,4):
+                       msg.append(mat[j][k]) 
+        return msg
+                      
 if __name__ == '__main__':
-    aes=AES("Thats my Kung Fu",128,"*")
-    aes.encrypt("Two One Nine Two I am ")
+    # aes=AES("Thats my Kung Fu",128,"*")
+    # cyper=aes.encrypt("Two One Nine Two")
+    mat=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
+    
+    
