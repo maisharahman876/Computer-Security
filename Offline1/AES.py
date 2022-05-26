@@ -135,10 +135,13 @@ class AES:
         self.padding=padding
         if size==128:
             self.round=10
+            self.words=44
         elif size==192:
             self.round=12
+            self.words=52
         else:
             self.round=14
+            self.words=60
         #print({self.size})
         lst = list()
         
@@ -239,9 +242,9 @@ class AES:
                 lst2 = lst2[4:]
             
             #add round key -Round 0
-            for j in range(40,44):
+            for j in range(self.words-4,self.words):
                 for k in range(0,4):
-                    mat[j-40][k]=mat[j-40][k]^self.keys[j][k]
+                    mat[j-self.words+4][k]=mat[j-self.words+4][k]^self.keys[j][k]
                     #print(hex(mat[j-40][k]))
                     
             for m in range(1,self.round+1):
@@ -256,9 +259,9 @@ class AES:
                         mat[j][k]=InvSbox[16*val1+val2]
                 mat=np.transpose(mat)
                 #add round key 
-                for j in range(40-4*m,44-4*m):
+                for j in range(self.words-4-4*m,self.words-4*m):
                     for k in range(0,4):
-                        mat[j-40+4*m][k]=mat[j-40+4*m][k]^self.keys[j][k]
+                        mat[j-self.words+4+4*m][k]=mat[j-self.words+4+4*m][k]^self.keys[j][k]
                 #inverse mix columns
                 if m!=self.round:
                     mat=np.transpose(mat)
@@ -276,8 +279,8 @@ class AES:
         return msg
                       
 if __name__ == '__main__':
-    aes=AES("Thats my Kung Fu",128,"*")
-    cyper=aes.encrypt("Two One Nine Two")
+    aes=AES("Thats my Kung",128,"*")
+    cyper=aes.encrypt("Two One Nine Two ami maisha")
     plain=aes.decrypt(cyper)
     str=''
     for i in plain:

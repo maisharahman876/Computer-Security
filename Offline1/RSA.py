@@ -8,7 +8,9 @@ def gcd(a, b) :
     return gcd(b % a, a)
 class RSA:
     def __init__(self, k):
-        key_len=k/2
+        self.k=k
+    def key_generation(self):
+        key_len=int(self.k/2)
         min=2
         max=math.pow(2,key_len)
        
@@ -31,11 +33,30 @@ class RSA:
                 self.d=int(self.d)
                 break
             i+=1
+        return self.d,self.n
     def encrypt(self,msg):
-        
-        
+        lst=list()
+        encrypt=list()
+        for m in msg:
+            lst.append(hex(ord(m)))
+        chars= [int(x, 16) for x in lst]
+        for i in chars:
+            encrypt.append(pow(i,self.e)%self.n)
+        return encrypt
+    def decrypt(self,lst,d,n):
+        data=list()
+        for i in lst:
+            data.append(pow(i,d)%n)
+        string=''
+        for i in data:
+            string+=chr(i)
+        return string
+
 
 
 
 if __name__ == '__main__':
     rsa=RSA(16)
+    d,n=rsa.key_generation()
+    lst=rsa.encrypt("Ami ekta chagol")
+    print(rsa.decrypt(lst,d,n))
