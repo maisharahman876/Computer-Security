@@ -222,11 +222,13 @@ class AES:
             for j in range(0,4):
                     for k in range(0,4):
                        cypher.append(mat[j][k]) 
+        
         return cypher
 
     def decrypt(self,lst):
         l=int(len(lst)/16) 
         msg=list()
+        
         for i in range(0,l):
             lst2=list()
             for j in range(16*i,16+16*i):
@@ -235,10 +237,13 @@ class AES:
             while lst2 != []:
                 mat.append(lst2[:4])
                 lst2 = lst2[4:]
+            
             #add round key -Round 0
-            for j in range(0,4):
+            for j in range(40,44):
                 for k in range(0,4):
-                    mat[j][k]=mat[j][k]^self.keys[j][k]
+                    mat[j-40][k]=mat[j-40][k]^self.keys[j][k]
+                    #print(hex(mat[j-40][k]))
+                    
             for m in range(1,self.round+1):
                 #inverse shift row
                 mat=np.transpose(mat)
@@ -251,9 +256,9 @@ class AES:
                         mat[j][k]=InvSbox[16*val1+val2]
                 mat=np.transpose(mat)
                 #add round key 
-                for j in range(4*m,4+4*m):
+                for j in range(40-4*m,44-4*m):
                     for k in range(0,4):
-                        mat[j-4*m][k]=mat[j-4*m][k]^self.keys[j][k]
+                        mat[j-40+4*m][k]=mat[j-40+4*m][k]^self.keys[j][k]
                 #inverse mix columns
                 if m!=self.round:
                     mat=np.transpose(mat)
@@ -266,13 +271,18 @@ class AES:
                     mat=new_mat.copy()  
                     mat=np.transpose(mat)
             for j in range(0,4):
-                    for k in range(0,4):
-                       msg.append(mat[j][k]) 
+                for k in range(0,4):
+                    msg.append(mat[j][k]) 
         return msg
                       
 if __name__ == '__main__':
-    # aes=AES("Thats my Kung Fu",128,"*")
-    # cyper=aes.encrypt("Two One Nine Two")
-    mat=[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
+    aes=AES("Thats my Kung Fu",128,"*")
+    cyper=aes.encrypt("Two One Nine Two")
+    plain=aes.decrypt(cyper)
+    str=''
+    for i in plain:
+        str+=chr(i)
+    print(str)
+    
     
     
