@@ -1,5 +1,6 @@
 from BitVector import *
 import numpy as np
+import time
 def ShiftRows(x):
     x[1:] = [np.append(x[i][i:], x[i][:i]) for i in range(1, 4)]
     return x
@@ -82,7 +83,7 @@ def gen_func(lst,n,round_const):
     last = last[1:] + last[:1]
     
     #byte substitution
-    for i in range(0,n):
+    for i in range(0,4):
         val2=last[i]%16
         val1=int(last[i]/16)%16
         last[i]=Sbox[16*val1+val2]
@@ -105,7 +106,7 @@ def key_expansion(lst):
     round=1
     round_const=1
     w_last=list()
-    print(n)
+    #print(n)
     
     for i in range(n,n+r):
         if i%n==0:
@@ -276,16 +277,68 @@ class AES:
             for j in range(0,4):
                 for k in range(0,4):
                     msg.append(mat[j][k]) 
-        return msg
+        string=''
+        for i in msg:
+            string+=chr(i)
+        return string
                       
 if __name__ == '__main__':
-    aes=AES("Thats my Kung",128,"*")
-    cyper=aes.encrypt("Two One Nine Two ami maisha")
-    plain=aes.decrypt(cyper)
-    str=''
+    print("Enter key Size of AES(16/24/32) : ")
+    aes_s=int(input())
+    print("Enter your Message: ")
+    msg=input()
+    print("Enter your AES key : ")
+    key=input()
+    st=time.time()
+    aes=AES(key,aes_s*8,"0")
+    end=time.time()
+    key_gen=end-st
+    
+    st=time.time()
+    cipher=aes.encrypt(msg)
+    end=time.time()
+    plain=aes.decrypt(cipher)
+    end1=time.time()
+
+    print("\nPlain Text:")
+    print(msg,"[In ASCII]")
+    string=''
+    for i in msg:
+        string+=hex(ord(i))
+    
+    print(string,"[In Hex]")
+
+    print("\nkey:")
+    print(key,"[In ASCII]")
+    string=''
+    for i in key:
+        string+=hex(ord(i))
+    
+    print(string,"[In Hex]")
+
+    print("\nCipher Text:")
+    string=''
+    string2=''
+    for i in cipher:
+        string+=chr(i)
+        string2+=hex(i)
+    print(string2,"[In Hex]")
+    print(string,"[In ASCII]")
+    
+
+    print("\nDecipher Text:")
+    string=''
     for i in plain:
-        str+=chr(i)
-    print(str)
+        string+=hex(ord(i))
+    print(string,"[In Hex]")
+    print(plain,"[In ASCII]")
+
+    print("\nExecution Time:")
+    print("Key Scheduling : ",key_gen," seconds")
+    print("Encryption Time : ",end-st," seconds")
+    print("Encryption Time : ",end1-end," seconds")
+
+    
     
     
     
