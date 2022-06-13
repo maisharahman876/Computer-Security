@@ -1,0 +1,30 @@
+sudo sysctl -w kernel.randomize_va_space=0
+sudo ln -sf /bin/zsh /bin/sh
+sudo su
+gcc -DBUF_SIZE=100 -m32 -o stack -z execstack -fno-stack-protector stack.c
+sudo chown root stack
+sudo chmod 4755 stack
+su seed
+
+
+touch badfile
+gcc -DBUF_SIZE=100 -m32 -o stack_dbg -g -z execstack -fno-stack-protector stack.c
+
+gdb stack_dbg
+b bof //brkpoint on bof
+run //run from start
+next //ebp update hote
+p $ebp //print ebp
+p &buffer
+p /d 0x -0x
+
+disas bof //code er img
+b *0x //oi line er address
+c //continue
+stepi //porer line e jete
+
+p (*(unsigned*)($ebp+4))
+
+///////////Assembly to machine code////////////////
+///function er return value eax e thakbe
+//kono 0 dewa jabena and parameter er serial thik rakhte hobe, right to left
